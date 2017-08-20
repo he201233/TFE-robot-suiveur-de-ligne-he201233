@@ -33,20 +33,15 @@ void echo(){
             triggered=1;
         }
         //circuit anti rebond
-        if(RB7 && triggered){
-            __delay_us(500);
-            if(RB7){
-              //  RB2=1;
-                __delay_ms(2);
-                return;
-            }else{
-                RB2=0;
-                RB3=0;
-               // RB2=0;
-                __delay_ms(38);
-                
-            }
-            triggered=0;
+        __delay_us(500);
+        if(RB7){
+          //  RB2=1;
+            RB2=0;
+            RB3=0;
+            __delay_ms(38);
+        	 triggered=0;
+        }else{
+            return;
         }
         __delay_ms(1);
     }
@@ -57,7 +52,7 @@ void avancer(int nb){
         if(!RB4 && !RB5){ //avancer
             RB2=1;
             RB3=1;
-            __delay_ms(3);
+            __delay_ms(2);
         }
         else if(RB4 && !RB5){ //tourner gauche
             while(RB4){
