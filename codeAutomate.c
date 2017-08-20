@@ -54,12 +54,12 @@ void echo(){
 void avancer(int nb){
     while(1){
         echo();
-        while(!RB4 && !RB5){ //avancer
+        if(!RB4 && !RB5){ //avancer
             RB2=1;
             RB3=1;
             __delay_ms(3);
         }
-        if(RB4 && !RB5){ //tourner gauche
+        else if(RB4 && !RB5){ //tourner gauche
             while(RB4){
                 RB2=0;
                 RB3=1;
