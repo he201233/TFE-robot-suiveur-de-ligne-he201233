@@ -43,10 +43,10 @@ void echo(int *ptLastEchoCall){
             return;
         }
         else{
-            __delay_ms(38);
-            *ptLastEchoCall=39;
             moteurG=0;
             moteurD=0;
+            __delay_ms(38);
+            *ptLastEchoCall=39;
         }
     }
 }
