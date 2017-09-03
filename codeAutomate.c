@@ -1,7 +1,14 @@
 #define _XTAL_FREQ 4000000
 
 #include <xc.h>
+#include <stdlib.h>
 
+#define moteurG RB2
+#define moteurD RB3
+#define senseurG RB4
+#define senseurD RB5
+#define trigger RB6
+#define pinEcho RB7
 // BEGIN CONFIG
 #pragma config FOSC = ECH       // Oscillator Selection (ECH, External Clock, High Power Mode (4-32 MHz): device clock supplied to CLKIN pin)
 #pragma config WDTE = ON        // Watchdog Timer Enable (WDT enabled)
@@ -23,69 +30,73 @@
 #pragma config LVP = ON         // Low-Voltage Programming Enable (Low-voltage programming enabled)
 //END CONFIG
 
-void echo(){
-    int triggered=0;
+void echo(int *ptLastEchoCall){
     while(1){
-        if(!triggered && !RB7){
-            RB6=1;
+        if(!pinEcho && *ptLastEchoCall>38){  
+            trigger=1;
             __delay_us(10);
-            RB6=0;
-            triggered=1;
+            trigger=0;
+            *ptLastEchoCall=0;
+            __delay_us(500);
         }
-        //circuit anti rebond
-        __delay_us(500);
-        if(RB7){
-          //  RB2=1;
-            RB2=0;
-            RB3=0;
-            __delay_ms(38);
-        	 triggered=0;
-        }else{
+        if(pinEcho){
             return;
         }
-        __delay_ms(1);
+        else{
+            __delay_ms(38);
+            *ptLastEchoCall=39;
+            moteurG=0;
+            moteurD=0;
+        }
     }
 }
-void avancer(int nb){
+void avancer(){
+    int lastEchoCall=39;
     while(1){
-        echo();
-        if(!RB4 && !RB5){ //avancer
-            RB2=1;
-            RB3=1;
-            __delay_ms(2);
+        if(lastEchoCall>38){
+            echo(&lastEchoCall);
         }
-        else if(RB4 && !RB5){ //tourner gauche
-            while(RB4){
-                RB2=0;
-                RB3=1;
-                __delay_ms(2);
+        if(!senseurG && !senseurD){ //avancer
+            moteurG=1;
+            moteurD=1;
+            __delay_ms(2);
+            lastEchoCall=lastEchoCall+2;
+        }
+        else if(senseurG && !senseurD){ //tourner gauche
+            moteurG=0;
+            moteurD=1;
+            __delay_ms(40);
+            lastEchoCall=39;
+            if(senseurG && !senseurD){
+                __delay_ms(40);
             }
         }
-        else if(RB5 && !RB4){ //tourner droite
-            while(RB5){
-                RB2=1;
-                RB3=0;
-                __delay_ms(2);
+        else if(senseurD && !senseurG){ //tourner droite
+            moteurG=1;
+            moteurD=0;
+            __delay_ms(40);
+            lastEchoCall=39;
+            if(senseurD && !senseurG){
+                __delay_ms(40);
             }
         }
         else{
            __delay_ms(1); 
+           lastEchoCall=lastEchoCall+1;
         }
     }
 }
 
 int main()
 {
-    
-  TRISB2 = 0; //RB2 output : moteur gauceh
-  TRISB3 = 0; // RB3 output : moteur droit
-  TRISBbits.TRISB4 = 1; //RB4 input IR sensor gauche
-  TRISBbits.TRISB5 = 1; //RB5 input IR sensor droit
+  moteurG = 0; //output 
+  moteurD = 0;
+  senseurG = 1; //input 
+  senseurD = 1;
+  trigger = 0;
+  pinEcho = 1; 
   ANSELB = 0; // B = digital 
   
-//  TRISB6 = 0; // trigger ultrason
-//  TRISB7 = 1; //echo ultrason
-//  echo();
-  avancer(1);
+  avancer();
   return 0;
 }
